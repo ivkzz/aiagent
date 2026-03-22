@@ -53,7 +53,7 @@ def get_vectorstore() -> Chroma:
             collection_name=_COLLECTION_NAME,
             embedding_function=get_embeddings(),
             persist_directory=settings.chroma_persist_dir,
-            # L2 distance (евклидово) по умолчанию
+            collection_metadata={"hnsw:space": "cosine"}, # Используем косинусное расстояние для корректной нормализации оценок (0..1)
         )
     except Exception as exc:
         raise VectorStoreError(f"Ошибка инициализации Chroma: {exc}") from exc

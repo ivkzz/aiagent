@@ -71,50 +71,68 @@ def test_agent_state_structure() -> None:
 @pytest.mark.asyncio
 async def test_rag_search_returns_string_on_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     """rag_search возвращает строку-подсказку если нет результатов."""
+    from langchain_core.messages import ToolMessage
     from app.agent.tools.rag_tool import get_retriever, set_retriever
 
     # Создаём mock ретризер
     class MockRetriever:
-        async def search(self, **kwargs):
-            return "Ничего релевантного не найдено. Попробуйте уточнить запрос."
+        async def search_with_sources(self, **kwargs):
+            from dataclasses import dataclass
+            @dataclass
+            class MockResult:
+                content: str
+                sources: list[str]
+            return MockResult("Ничего релевантного не найдено. Попробуйте уточнить запрос.", [])
 
     set_retriever(MockRetriever())
 
     from app.agent.tools.rag_tool import rag_search
 
-    result = await rag_search.ainvoke({"query": "тестовый запрос"})
+    result = await rag_search.ainvoke(
+        {"name": "rag_search", "args": {"query": "тестовый запрос"}, "id": "call_1", "type": "tool_call"}
+    )
 
-    assert isinstance(result, str)
-    assert len(result) > 0
+    assert isinstance(result, ToolMessage)
+    assert len(result.content) > 0
 
     # Сбрасываем глобальный ретризер
     set_retriever(None)
 
-
 @pytest.mark.asyncio
 async def test_rag_search_formats_sources(monkeypatch: pytest.MonkeyPatch) -> None:
     """rag_search включает источники в результат."""
+    from langchain_core.messages import ToolMessage
     from app.agent.tools.rag_tool import get_retriever, set_retriever
 
     # Создаём mock ретризер, возвращающий отформатированную строку
     class MockRetriever:
-        async def search(self, **kwargs):
-            return (
+        async def search_with_sources(self, **kwargs):
+            from dataclasses import dataclass
+            @dataclass
+            class MockResult:
+                content: str
+                sources: list[str]
+            return MockResult(
                 "Найдено 1 фрагментов.\n\n"
                 "[1] Источник: test.pdf (релевантность: 0.95)\n"
-                "Содержание документа"
+                "Содержание документа",
+                ["test.pdf"]
             )
 
     set_retriever(MockRetriever())
 
     from app.agent.tools.rag_tool import rag_search
 
-    result = await rag_search.ainvoke({"query": "запрос"})
+    result = await rag_search.ainvoke(
+        {"name": "rag_search", "args": {"query": "запрос"}, "id": "call_1", "type": "tool_call"}
+    )
 
+    assert isinstance(result, ToolMessage)
     # Проверяем, что результат содержит источник и содержание
-    assert "Источник: test.pdf" in result
-    assert "(релевантность: 0.95)" in result
-    assert "Содержание документа" in result
+    assert "Источник: test.pdf" in result.content
+    assert "(релевантность: 0.95)" in result.content
+    assert "Содержание документа" in result.content
+    assert result.response_metadata == {"sources": ["test.pdf"]}
 
     # Сбрасываем глобальный ретризер
     set_retriever(None)
@@ -130,6 +148,7 @@ def test_parse_response_node_updates_sources() -> None:
     from langchain_core.messages import ToolMessage
 
     from app.agent.nodes import parse_response_node
+    from app.agent.state import AgentState
 
     # Создаём состояние с ToolMessage, содержащим источники
     state: AgentState = {
@@ -138,6 +157,7 @@ def test_parse_response_node_updates_sources() -> None:
                 name="rag_search",
                 content="[Источник: doc1.pdf]\nСодержание.\n\n[Источник: doc2.pdf]\nДругое.",
                 tool_call_id="call_1",
+                response_metadata={"sources": ["doc1.pdf", "doc2.pdf"]},
             )
         ],
         "thread_id": "t",
@@ -155,6 +175,7 @@ def test_parse_response_node_deduplicates_sources() -> None:
     from langchain_core.messages import ToolMessage
 
     from app.agent.nodes import parse_response_node
+    from app.agent.state import AgentState
 
     state: AgentState = {
         "messages": [
@@ -162,6 +183,7 @@ def test_parse_response_node_deduplicates_sources() -> None:
                 name="rag_search",
                 content="[Источник: doc1.pdf]\n...\n[Источник: doc1.pdf]\n...",
                 tool_call_id="call_1",
+                response_metadata={"sources": ["doc1.pdf", "doc1.pdf"]},
             )
         ],
         "thread_id": "t",

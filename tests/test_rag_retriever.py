@@ -176,6 +176,6 @@ def test_rag_config_defaults() -> None:
 
     assert config.default_k == 4
     assert config.max_k == 8
-    assert config.score_threshold == 0.2
+    assert config.score_threshold == 0.1
     assert config.multi_query_enabled is True
     assert config.multi_query_max_queries == 3  # по умолчанию 3

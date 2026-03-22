@@ -152,7 +152,7 @@ class RAGRetriever:
             Список документов с score в metadata
         """
         if score_threshold is None:
-            score_threshold = self.config.score_threshold
+            score_threshold = 0.0  # Отключаем жесткий фильтр по умолчанию, чтобы не терять релевантные документы
 
         try:
             docs = await asyncio.to_thread(
@@ -175,7 +175,7 @@ class RAGRetriever:
         k: int | None = None,
         *,
         score_threshold: float | None = None,
-        use_multi_query: bool = True,
+        use_multi_query: bool = False,  # Отключено для ускорения работы агента
         deduplicate: bool = True,
         aggregate: bool = True,
         return_content_only: bool = False,
@@ -271,7 +271,7 @@ class RAGRetriever:
         k: int | None = None,
         *,
         score_threshold: float | None = None,
-        use_multi_query: bool = True,
+        use_multi_query: bool = False,  # Отключено для ускорения работы агента
         deduplicate: bool = True,
     ) -> "RAGSearchResult":
         """Поиск с возвратом структурированного результата (content + sources).

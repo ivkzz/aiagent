@@ -253,7 +253,15 @@ def make_agent_node(
                                 tool_calls=response.tool_calls,
                             )
 
-        return {"messages": [response], "need_retry": state["need_retry"]}
+        return {
+            "messages": [response],
+            "need_retry": state["need_retry"],
+            "step_count": state["step_count"],
+            "executed_actions": state["executed_actions"],
+            "rag_found_sources": state.get("rag_found_sources", set()),
+            "pending_rag_searches": state.get("pending_rag_searches", {}),
+            "rag_search_history": state.get("rag_search_history", []),
+        }
 
     return agent_node
 
