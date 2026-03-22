@@ -9,9 +9,12 @@ Persistent Chroma хранит embeddings между перезапусками 
 - get_vectorstore()       → Chroma (синглтон)
 - add_documents(chunks)   → добавление/обновление chunks
 - similarity_search(...)  → поиск по запросу
+- get_all_sources()       → асинхронное получение списка источников
 """
 
+import asyncio
 from functools import lru_cache
+from typing import Any
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
@@ -141,3 +144,28 @@ def delete_by_source(source_name: str) -> None:
         log.info(f"Удалены chunks источника: {source_name}")
     except Exception as exc:
         log.warning(f"Не удалось удалить chunks для {source_name}: {exc}")
+
+
+async def get_all_sources() -> list[str]:
+    """Асинхронно возвращает список всех уникальных источников документов.
+
+    Использует run_in_executor для выполнения синхронной операции Chroma
+    без блокировки event loop.
+
+    Returns:
+        Отсортированный список имён источников (source).
+    """
+    vectorstore = get_vectorstore()
+
+    def _fetch_sources() -> list[str]:
+        """Внутренняя синхронная функция для получения источников."""
+        result = vectorstore.get()
+        metadatas = result.get("metadatas", [])
+        sources: set[str] = set()
+        for meta in metadatas:
+            if meta and "source" in meta:
+                sources.add(meta["source"])
+        return sorted(sources)
+
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(None, _fetch_sources)

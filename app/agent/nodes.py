@@ -211,6 +211,10 @@ def make_agent_node(
                 executed = state["executed_actions"]
                 count = sum(1 for a in executed if a == action_id)
 
+                # Сначала добавляем в историю
+                executed.append(action_id)
+
+                # Затем проверяем на повтор
                 if count >= MAX_REPEATS:
                     log.warning(f"Повторяющееся действие: {action_id} (x{count+1})")
                     state["need_retry"] = True
@@ -225,8 +229,6 @@ def make_agent_node(
                         content=new_content,
                         tool_calls=response.tool_calls,
                     )
-
-                executed.append(action_id)
 
                 # Anti-loop логика для rag_search
                 if tool_call["name"] == "rag_search":

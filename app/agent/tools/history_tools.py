@@ -23,19 +23,17 @@ async def get_conversation_history() -> str:
     Returns:
         Форматированная история диалога или сообщение об ошибке.
     """
+    # Проверяем thread_id и graph в правильном порядке
     thread_id = thread_id_var.get()
     if not thread_id:
         return "Ошибка: thread_id не установлен."
 
-    # Ленивый импорт чтобы избежать циклической зависимости
-    from app.agent.graph import get_graph
-
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-    messages_formatted: list[str] = []
-
     graph = graph_var.get()
     if not graph:
         return "Ошибка: graph не доступен в контексте."
+
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
+    messages_formatted: list[str] = []
 
     try:
         state = await graph.aget_state(config)
@@ -67,20 +65,18 @@ async def get_recent_messages(
     Returns:
         Форматированные последние сообщения.
     """
+    # Проверяем thread_id и graph в правильном порядке
     thread_id = thread_id_var.get()
     if not thread_id:
         return "Ошибка: thread_id не установлен."
 
-    # Ленивый импорт чтобы избежать циклической зависимости
-    from app.agent.graph import get_graph
+    graph = graph_var.get()
+    if not graph:
+        return "Ошибка: graph не доступен в контексте."
 
     n = max(1, min(n, 20))
     config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
     messages_formatted: list[str] = []
-
-    graph = graph_var.get()
-    if not graph:
-        return "Ошибка: graph не доступен в контексте."
 
     try:
         state = await graph.aget_state(config)
@@ -110,18 +106,16 @@ async def get_conversation_summary() -> str:
     Returns:
         Краткая сводка (2-3 предложения) или сообщение об ошибке.
     """
+    # Проверяем thread_id и graph в правильном порядке
     thread_id = thread_id_var.get()
     if not thread_id:
         return "Ошибка: thread_id не установлен."
 
-    # Ленивый импорт чтобы избежать циклической зависимости
-    from app.agent.graph import get_graph
-
-    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
-
     graph = graph_var.get()
     if not graph:
         return "Ошибка: graph не доступен в контексте."
+
+    config: RunnableConfig = {"configurable": {"thread_id": thread_id}}
 
     try:
         state = await graph.aget_state(config)

@@ -109,12 +109,9 @@ async def write_structured_data(sheet_name: str, data: list[dict[str, Any]]) -> 
         rows.append(row)
 
     try:
-        # Вызываем функцию записи нескольких строк напрямую
-        from app.integrations.google_sheets import write_rows_to_sheet
-
         await write_rows_to_sheet(sheet_name, rows)
         log.info(f"Записано {len(data)} записей структурированных данных в лист '{sheet_name}'")
         return f"Успешно записано {len(data)} записей в лист '{sheet_name}'"
-    except Exception as exc:
+    except SheetsError as exc:
         log.warning(f"Не удалось записать структурированные данные: {exc}")
         return f"Ошибка записи в Google Sheets: {exc}"

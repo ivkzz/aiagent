@@ -154,7 +154,7 @@ class RAGRetriever:
         if score_threshold is None:
             score_threshold = self.config.score_threshold
 
-         try:
+        try:
             docs = await asyncio.to_thread(
                 similarity_search,
                 query=query,
@@ -165,7 +165,7 @@ class RAGRetriever:
             log.debug(f"Поиск '{query[:50]}...': найдено {len(docs)} документов")
             return docs
 
-         except Exception as exc:
+        except Exception as exc:
             log.error(f"Ошибка поиска для запроса '{query[:50]}...': {exc}")
             return []
 

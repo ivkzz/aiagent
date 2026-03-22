@@ -28,7 +28,10 @@ _uncompiled_graph: StateGraph[AgentState] | None = None
 
 
 def _should_continue(state: AgentState) -> str:
-    last_message = state["messages"][-1]
+    messages = state.get("messages", [])
+    if not messages:
+        return END
+    last_message = messages[-1]
     if hasattr(last_message, "tool_calls") and last_message.tool_calls:
         return "tools"
     return END

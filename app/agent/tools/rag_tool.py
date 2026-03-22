@@ -25,11 +25,17 @@ def set_retriever(retriever: RAGRetriever) -> None:
 
 
 def get_retriever() -> RAGRetriever:
-    """Возвращает глобальный ретризер."""
+    """Возвращает глобальный ретризер.
+
+    Raises:
+        RuntimeError: Если retriever не инициализирован.
+    """
     global _retriever_global
     if _retriever_global is None:
-        # Fallback: создаем дефолтный (без LLM для multi-query)
-        _retriever_global = RAGRetriever()
+        raise RuntimeError(
+            "RAGRetriever не инициализирован. "
+            "Вызовите init_agent_graph() в lifespan перед использованием."
+        )
     return _retriever_global
 
 
